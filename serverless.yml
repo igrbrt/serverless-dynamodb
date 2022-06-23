@@ -1,0 +1,82 @@
+service: readapp-server
+
+plugins:
+  - serverless-plugin-optimize
+  - serverless-offline
+  - serverless-dynamodb-local
+  #- serverless-plugin-typescript
+
+functions:
+  getAllArticles:
+    handler: dist/src/functions/getAllArticles.handler
+    events:
+      - http:
+          method: get
+          path: /articles
+          cors: true
+  createArticle:
+    handler: dist/src/functions/createArticle.handler
+    events:
+      - http:
+          method: post
+          path: /articles
+          cors: true
+  getArticleById:
+    handler: dist/src/functions/getArticleById.handler
+    events:
+      - http:
+          method: get
+          path: /articles/{id}
+          cors: true
+  deleteArticle:
+    handler: dist/src/functions/deleteArticle.handler
+    events:
+      - http:
+          method: delete
+          path: /articles/{id}
+          cors: true
+  updateArticle:
+    handler: dist/src/functions/updateArticle.handler
+    events:
+      - http:
+          method: put
+          path: /articles/{id}
+          cors: true
+
+provider:
+  name: aws
+  region: sa-east-1
+  runtime: nodejs16.x
+  apiGateway:
+    shouldStartNameWithService: true
+
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    NODE_OPTIONS: --enable-source-maps --stack-trace-limit=1000
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:DescribeTable
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: !GetAtt ArticlesTable.Arn #arn:aws:dynamodb:localhost:8000:table/ArticlesTable
+custom:
+  dynamodb:
+    start:
+      port: 8000
+      inMemory: false
+      migrate: true
+    stages: dev
+    endpoints:
+      dynamodbURL: 'http://localhost:8000'
+#serverless-offline:
+#useChildProcesses: true
+
+resources:
+  - ${file(resource/dynamodb.yml)}
